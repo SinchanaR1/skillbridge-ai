@@ -47,6 +47,20 @@ type Achievement = {
   description: string;
 };
 
+type Profile = {
+  name: string;
+  role: string;
+  email: string;
+  location: string;
+};
+
+const defaultProfile: Profile = {
+  name: "Student Profile",
+  role: "Aspiring Full Stack Developer",
+  email: "",
+  location: "India",
+};
+
 export default function PortfolioPage() {
   const [skills, setSkills] = useState<Skill[]>([
     { name: "JavaScript", score: 0 },
@@ -59,6 +73,9 @@ export default function PortfolioPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [certifications, setCertifications] = useState<Certification[]>([]);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [profile, setProfile] = useState<Profile>(defaultProfile);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [profileDraft, setProfileDraft] = useState<Profile>(defaultProfile);
 
   useEffect(() => {
     const savedSkills = localStorage.getItem("skillbridge-assessment");
@@ -83,6 +100,15 @@ export default function PortfolioPage() {
 
     const savedAchievements = localStorage.getItem("skillbridge-achievements");
     if (savedAchievements) setAchievements(JSON.parse(savedAchievements));
+
+    const savedProfile = localStorage.getItem("skillbridge-profile");
+    if (savedProfile) {
+      const parsed = JSON.parse(savedProfile);
+      setProfile(parsed);
+      setProfileDraft(parsed);
+    } else {
+      setProfileDraft(defaultProfile);
+    }
   }, []);
 
   const readiness =
@@ -91,6 +117,17 @@ export default function PortfolioPage() {
       : 0;
 
   const completedSkills = skills.filter((skill) => skill.score >= 75).length;
+
+  const handleSaveProfile = () => {
+    setProfile(profileDraft);
+    localStorage.setItem("skillbridge-profile", JSON.stringify(profileDraft));
+    setIsEditingProfile(false);
+  };
+
+  const handleCancelEditProfile = () => {
+    setProfileDraft(profile);
+    setIsEditingProfile(false);
+  };
 
   const handleAddProject = () => {
     const title = window.prompt("Project title:");
@@ -125,6 +162,7 @@ export default function PortfolioPage() {
 
   const handleExport = () => {
     const portfolioData = {
+      profile,
       skills,
       applications,
       projects,
@@ -181,39 +219,123 @@ export default function PortfolioPage() {
         <section className="mb-6 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04]">
           <div className="h-28 bg-gradient-to-r from-indigo-500/20 via-purple-500/10 to-transparent" />
           <div className="-mt-10 px-6 pb-6">
-            <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
-              <div className="flex flex-col gap-4 md:flex-row md:items-end">
-                <div className="flex h-20 w-20 items-center justify-center rounded-2xl border-4 border-[#070b14] bg-indigo-500/20 text-indigo-300">
-                  <UserRound size={34} />
+            {isEditingProfile ? (
+              <div className="rounded-2xl border border-white/10 bg-black/20 p-5">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="block">
+                    <span className="mb-1 block text-xs text-slate-400">Full name</span>
+                    <input
+                      type="text"
+                      value={profileDraft.name}
+                      onChange={(e) =>
+                        setProfileDraft({ ...profileDraft, name: e.target.value })
+                      }
+                      className="w-full rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2 text-sm outline-none focus:border-indigo-400"
+                      placeholder="Your name"
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-1 block text-xs text-slate-400">Role / headline</span>
+                    <input
+                      type="text"
+                      value={profileDraft.role}
+                      onChange={(e) =>
+                        setProfileDraft({ ...profileDraft, role: e.target.value })
+                      }
+                      className="w-full rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2 text-sm outline-none focus:border-indigo-400"
+                      placeholder="e.g. Aspiring Full Stack Developer"
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-1 block text-xs text-slate-400">Email</span>
+                    <input
+                      type="email"
+                      value={profileDraft.email}
+                      onChange={(e) =>
+                        setProfileDraft({ ...profileDraft, email: e.target.value })
+                      }
+                      className="w-full rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2 text-sm outline-none focus:border-indigo-400"
+                      placeholder="you@example.com"
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-1 block text-xs text-slate-400">Location</span>
+                    <input
+                      type="text"
+                      value={profileDraft.location}
+                      onChange={(e) =>
+                        setProfileDraft({ ...profileDraft, location: e.target.value })
+                      }
+                      className="w-full rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2 text-sm outline-none focus:border-indigo-400"
+                      placeholder="City, Country"
+                    />
+                  </label>
                 </div>
-                <div>
-                  <h2 className="text-2xl font-bold">Student Profile</h2>
-                  <p className="mt-1 text-sm text-slate-400">Aspiring Full Stack Developer</p>
-                  <div className="mt-2 flex flex-wrap gap-4 text-xs text-slate-500">
-                    <span className="flex items-center gap-1.5">
-                      <GraduationCap size={14} />
-                      Computer Science Student
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <MapPin size={14} />
-                      India
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <Mail size={14} />
-                      Student Profile
-                    </span>
+
+                <div className="mt-4 flex gap-3">
+                  <button
+                    onClick={handleSaveProfile}
+                    className="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold hover:bg-indigo-500"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={handleCancelEditProfile}
+                    className="rounded-lg border border-white/10 px-4 py-2 text-xs font-semibold hover:bg-white/5"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+                <div className="flex flex-col gap-4 md:flex-row md:items-end">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-2xl border-4 border-[#070b14] bg-indigo-500/20 text-indigo-300">
+                    <UserRound size={34} />
+                  </div>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <h2 className="text-2xl font-bold">{profile.name}</h2>
+                      <button
+                        onClick={() => {
+                          setProfileDraft(profile);
+                          setIsEditingProfile(true);
+                        }}
+                        className="rounded-lg border border-white/10 px-3 py-1 text-xs font-medium text-slate-300 hover:bg-white/5"
+                      >
+                        Edit profile
+                      </button>
+                    </div>
+                    <p className="mt-1 text-sm text-slate-400">{profile.role}</p>
+                    <div className="mt-2 flex flex-wrap gap-4 text-xs text-slate-500">
+                      <span className="flex items-center gap-1.5">
+                        <GraduationCap size={14} />
+                        Computer Science Student
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <MapPin size={14} />
+                        {profile.location || "Add your location"}
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <Mail size={14} />
+                        {profile.email || "Add your email"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-5 py-4">
+                  <p className="text-xs text-slate-500">Career Readiness</p>
+                  <div className="mt-1 flex items-center gap-2">
+                    <span className="text-3xl font-bold">{readiness}%</span>
+                    <Target size={18} className="text-emerald-400" />
                   </div>
                 </div>
               </div>
-
-              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-5 py-4">
-                <p className="text-xs text-slate-500">Career Readiness</p>
-                <div className="mt-1 flex items-center gap-2">
-                  <span className="text-3xl font-bold">{readiness}%</span>
-                  <Target size={18} className="text-emerald-400" />
-                </div>
-              </div>
-            </div>
+            )}
           </div>
         </section>
 

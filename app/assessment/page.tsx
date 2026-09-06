@@ -1,8 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-const questions = [
+type Question = {
+  skill: string;
+  question: string;
+  options: string[];
+  answer: string;
+};
+
+// Larger question bank per skill — a random subset is drawn from this each attempt
+const questionBank: Question[] = [
+  // JavaScript
   {
     skill: "JavaScript",
     question: "Which keyword is used to declare a variable that cannot be reassigned?",
@@ -15,6 +24,42 @@ const questions = [
     options: ["JSON.parse()", "JSON.stringify()", "JSON.convert()", "JSON.object()"],
     answer: "JSON.parse()",
   },
+  {
+    skill: "JavaScript",
+    question: "Which operator checks both value and type equality?",
+    options: ["==", "=", "===", "!="],
+    answer: "===",
+  },
+  {
+    skill: "JavaScript",
+    question: "What does the 'map()' array method return?",
+    options: [
+      "A single value",
+      "A new array with transformed elements",
+      "The original array unchanged",
+      "A boolean",
+    ],
+    answer: "A new array with transformed elements",
+  },
+  {
+    skill: "JavaScript",
+    question: "Which of these is used to handle asynchronous code cleanly?",
+    options: ["for loop", "async/await", "switch statement", "typeof"],
+    answer: "async/await",
+  },
+  {
+    skill: "JavaScript",
+    question: "What is the correct way to write an arrow function?",
+    options: [
+      "function => {}",
+      "(x) => x * 2",
+      "arrow (x) { return x * 2 }",
+      "def x: x * 2",
+    ],
+    answer: "(x) => x * 2",
+  },
+
+  // React
   {
     skill: "React",
     question: "Which hook is commonly used to manage state in a React component?",
@@ -33,6 +78,37 @@ const questions = [
     answer: "Describing UI in JavaScript",
   },
   {
+    skill: "React",
+    question: "Which hook runs side effects after a component renders?",
+    options: ["useEffect", "useMemo", "useRef", "useContext"],
+    answer: "useEffect",
+  },
+  {
+    skill: "React",
+    question: "How does data typically flow in a React application?",
+    options: [
+      "Bottom to top only",
+      "Two-way binding by default",
+      "Top-down, from parent to child via props",
+      "Randomly between components",
+    ],
+    answer: "Top-down, from parent to child via props",
+  },
+  {
+    skill: "React",
+    question: "What is used to uniquely identify items when rendering lists?",
+    options: ["className", "key", "id only", "index of the array always"],
+    answer: "key",
+  },
+  {
+    skill: "React",
+    question: "Which hook lets you share state across components without prop drilling?",
+    options: ["useState", "useContext", "useEffect", "useCallback"],
+    answer: "useContext",
+  },
+
+  // SQL
+  {
     skill: "SQL",
     question: "Which SQL command is used to retrieve data from a table?",
     options: ["GET", "FETCH", "SELECT", "READ"],
@@ -44,6 +120,32 @@ const questions = [
     options: ["ORDER BY", "WHERE", "GROUP BY", "FILTER"],
     answer: "WHERE",
   },
+  {
+    skill: "SQL",
+    question: "Which SQL join returns only matching rows from both tables?",
+    options: ["LEFT JOIN", "RIGHT JOIN", "INNER JOIN", "FULL OUTER JOIN"],
+    answer: "INNER JOIN",
+  },
+  {
+    skill: "SQL",
+    question: "Which keyword removes duplicate rows from a result set?",
+    options: ["UNIQUE", "DISTINCT", "REMOVE", "FILTER"],
+    answer: "DISTINCT",
+  },
+  {
+    skill: "SQL",
+    question: "Which command is used to add a new row to a table?",
+    options: ["INSERT INTO", "ADD ROW", "CREATE ROW", "APPEND"],
+    answer: "INSERT INTO",
+  },
+  {
+    skill: "SQL",
+    question: "Which clause groups rows sharing a common value for aggregation?",
+    options: ["ORDER BY", "GROUP BY", "HAVING", "WHERE"],
+    answer: "GROUP BY",
+  },
+
+  // Node.js
   {
     skill: "Node.js",
     question: "Node.js is primarily used to run JavaScript where?",
@@ -61,14 +163,75 @@ const questions = [
     options: ["project.json", "package.json", "node.json", "server.json"],
     answer: "package.json",
   },
+  {
+    skill: "Node.js",
+    question: "Which module is commonly used to build web servers in Node.js?",
+    options: ["fs", "path", "express", "os"],
+    answer: "express",
+  },
+  {
+    skill: "Node.js",
+    question: "What does 'npm' stand for?",
+    options: [
+      "Node Package Manager",
+      "New Program Method",
+      "Node Program Module",
+      "Network Package Manager",
+    ],
+    answer: "Node Package Manager",
+  },
+  {
+    skill: "Node.js",
+    question: "Which command installs dependencies listed in package.json?",
+    options: ["npm start", "npm install", "npm build", "npm run"],
+    answer: "npm install",
+  },
+  {
+    skill: "Node.js",
+    question: "Node.js uses which model to handle multiple requests efficiently?",
+    options: [
+      "Multi-threaded blocking model",
+      "Single-threaded event loop, non-blocking I/O",
+      "Manual thread creation for each request",
+      "Synchronous only model",
+    ],
+    answer: "Single-threaded event loop, non-blocking I/O",
+  },
 ];
 
+const QUESTIONS_PER_SKILL = 3;
+
+function shuffle<T>(array: T[]): T[] {
+  const copy = [...array];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+function generateQuestionSet(): Question[] {
+  const skills = Array.from(new Set(questionBank.map((q) => q.skill)));
+
+  const selected = skills.flatMap((skill) => {
+    const pool = questionBank.filter((q) => q.skill === skill);
+    return shuffle(pool).slice(0, QUESTIONS_PER_SKILL);
+  });
+
+  return shuffle(selected);
+}
+
 export default function AssessmentPage() {
+  // IMPORTANT: start empty on both server and client render so they always match.
+  // The random question set is generated only after mounting in the browser (see useEffect below).
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState<string[]>([]);
   const [finished, setFinished] = useState(false);
 
-  const question = questions[current];
+  useEffect(() => {
+    setQuestions(generateQuestionSet());
+  }, []);
 
   function selectAnswer(answer: string) {
     const updated = [...answers];
@@ -87,20 +250,44 @@ export default function AssessmentPage() {
   }
 
   function calculateResults() {
-    const scores: Record<string, number> = {};
+    const totals: Record<string, number> = {};
+    const correctCounts: Record<string, number> = {};
 
     questions.forEach((q, index) => {
-      if (!scores[q.skill]) {
-        scores[q.skill] = 0;
-      }
+      totals[q.skill] = (totals[q.skill] ?? 0) + 1;
 
       if (answers[index] === q.answer) {
-        scores[q.skill] += 50;
+        correctCounts[q.skill] = (correctCounts[q.skill] ?? 0) + 1;
       }
+    });
+
+    const scores: Record<string, number> = {};
+    Object.keys(totals).forEach((skill) => {
+      const correct = correctCounts[skill] ?? 0;
+      scores[skill] = Math.round((correct / totals[skill]) * 100);
     });
 
     return scores;
   }
+
+  function retakeAssessment() {
+    setQuestions(generateQuestionSet());
+    setCurrent(0);
+    setAnswers([]);
+    setFinished(false);
+  }
+
+  // Loading state — shown briefly while the random question set is generated client-side.
+  // This also guards against rendering before `questions` is populated.
+  if (questions.length === 0) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-slate-950 text-white">
+        <p className="text-sm text-slate-400">Preparing your assessment...</p>
+      </main>
+    );
+  }
+
+  const question = questions[current];
 
   if (finished) {
     const scores = calculateResults();
@@ -218,11 +405,7 @@ export default function AssessmentPage() {
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <button
-                onClick={() => {
-                  setCurrent(0);
-                  setAnswers([]);
-                  setFinished(false);
-                }}
+                onClick={retakeAssessment}
                 className="rounded-xl border border-white/10 px-5 py-3 text-sm font-semibold hover:bg-white/5"
               >
                 Retake Assessment
