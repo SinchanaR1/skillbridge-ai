@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   ArrowUpRight,
   BriefcaseBusiness,
@@ -48,10 +49,44 @@ const opportunities = [
   },
 ];
 
+function getGreeting(hour: number) {
+  if (hour < 5) return "Good night";
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  if (hour < 21) return "Good evening";
+  return "Good night";
+}
+
+function getFormattedDate(date: Date) {
+  return date.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+}
+
 export default function Home() {
   const [readiness, setReadiness] = useState(76);
   const [skills, setSkills] = useState<Skill[]>(defaultSkills);
   const [applicationCount, setApplicationCount] = useState(8);
+  const [projectCount, setProjectCount] = useState(0);
+  const [certificationCount, setCertificationCount] = useState(0);
+  const [achievementCount, setAchievementCount] = useState(0);
+  const [greeting, setGreeting] = useState("Good morning");
+  const [todayLabel, setTodayLabel] = useState("");
+
+  useEffect(() => {
+    // Greeting + date reflect the visitor's own device clock, updated every minute
+    const updateClock = () => {
+      const now = new Date();
+      setGreeting(getGreeting(now.getHours()));
+      setTodayLabel(getFormattedDate(now));
+    };
+
+    updateClock();
+    const interval = setInterval(updateClock, 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     try {
@@ -101,6 +136,27 @@ export default function Home() {
           setApplicationCount(applications.length);
         }
       }
+
+      const savedProjects = localStorage.getItem("skillbridge-projects");
+      if (savedProjects) {
+        const projects = JSON.parse(savedProjects);
+        if (Array.isArray(projects)) setProjectCount(projects.length);
+      }
+
+      const savedCerts = localStorage.getItem("skillbridge-certifications");
+      if (savedCerts) {
+        const certs = JSON.parse(savedCerts);
+        if (Array.isArray(certs)) setCertificationCount(certs.length);
+      }
+
+      const savedAchievements = localStorage.getItem(
+        "skillbridge-achievements"
+      );
+      if (savedAchievements) {
+        const achievements = JSON.parse(savedAchievements);
+        if (Array.isArray(achievements))
+          setAchievementCount(achievements.length);
+      }
     } catch (error) {
       console.log("Could not load dashboard data.", error);
     }
@@ -118,6 +174,9 @@ export default function Home() {
     topGaps.length > 0
       ? "Improving your priority skills can increase your career readiness."
       : "Your current assessment shows strong skill readiness.";
+
+  const portfolioItemCount =
+    projectCount + certificationCount + achievementCount;
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
@@ -195,21 +254,21 @@ export default function Home() {
               Applications
             </a>
 
-            <a
-              href="#learning"
+            <Link
+              href="/learning"
               className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm text-slate-400 hover:bg-white/5 hover:text-white"
             >
               <GraduationCap size={18} />
               Learning
-            </a>
+            </Link>
 
-            <a
-              href="#portfolio"
+            <Link
+              href="/portfolio"
               className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm text-slate-400 hover:bg-white/5 hover:text-white"
             >
               <UserRound size={18} />
               Portfolio
-            </a>
+            </Link>
 
           </nav>
 
@@ -257,11 +316,11 @@ export default function Home() {
             <div>
 
               <p className="text-sm text-slate-400">
-                Sunday, September 6
+                {todayLabel}
               </p>
 
               <h2 className="text-xl font-bold md:text-2xl">
-                Good evening, Student 👋
+                {greeting}, Student 👋
               </h2>
 
             </div>
@@ -626,29 +685,42 @@ export default function Home() {
               className="rounded-2xl border border-white/10 bg-white/[0.03] p-6"
             >
 
-              <div className="flex items-center gap-4">
+              <div className="flex items-center justify-between gap-4">
 
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-500/10">
+                <div className="flex items-center gap-4">
 
-                  <GraduationCap
-                    size={22}
-                    className="text-indigo-300"
-                  />
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-500/10">
+
+                    <GraduationCap
+                      size={22}
+                      className="text-indigo-300"
+                    />
+
+                  </div>
+
+                  <div>
+
+                    <h3 className="font-semibold">
+                      Personalized Learning
+                    </h3>
+
+                    <p className="mt-1 text-xs text-slate-400">
+                      {skillGaps > 0
+                        ? `${skillGaps} skill gap${skillGaps > 1 ? "s" : ""} detected — view your recommended courses and videos.`
+                        : "Your roadmap and recommended courses are ready to explore."}
+                    </p>
+
+                  </div>
 
                 </div>
 
-                <div>
-
-                  <h3 className="font-semibold">
-                    Personalized Learning
-                  </h3>
-
-                  <p className="mt-1 text-xs text-slate-400">
-                    Learning recommendations will be generated from your
-                    identified skill gaps.
-                  </p>
-
-                </div>
+                <Link
+                  href="/learning"
+                  className="flex shrink-0 items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-white/5"
+                >
+                  View roadmap
+                  <ArrowUpRight size={13} />
+                </Link>
 
               </div>
 
@@ -661,29 +733,42 @@ export default function Home() {
               className="rounded-2xl border border-white/10 bg-white/[0.03] p-6"
             >
 
-              <div className="flex items-center gap-4">
+              <div className="flex items-center justify-between gap-4">
 
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-500/10">
+                <div className="flex items-center gap-4">
 
-                  <UserRound
-                    size={22}
-                    className="text-indigo-300"
-                  />
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-500/10">
+
+                    <UserRound
+                      size={22}
+                      className="text-indigo-300"
+                    />
+
+                  </div>
+
+                  <div>
+
+                    <h3 className="font-semibold">
+                      Digital Student Portfolio
+                    </h3>
+
+                    <p className="mt-1 text-xs text-slate-400">
+                      {portfolioItemCount > 0
+                        ? `${portfolioItemCount} item${portfolioItemCount > 1 ? "s" : ""} added — projects, certifications and achievements.`
+                        : "Showcase your verified skills, projects, certifications and internships."}
+                    </p>
+
+                  </div>
 
                 </div>
 
-                <div>
-
-                  <h3 className="font-semibold">
-                    Digital Student Portfolio
-                  </h3>
-
-                  <p className="mt-1 text-xs text-slate-400">
-                    Showcase your verified skills, projects,
-                    certifications and internships.
-                  </p>
-
-                </div>
+                <Link
+                  href="/portfolio"
+                  className="flex shrink-0 items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-white/5"
+                >
+                  View portfolio
+                  <ArrowUpRight size={13} />
+                </Link>
 
               </div>
 

@@ -9,6 +9,7 @@ import {
   ChevronRight,
   CircleAlert,
   Clock3,
+  ExternalLink,
   Lightbulb,
   PlayCircle,
   Target,
@@ -20,6 +21,12 @@ type Skill = {
   score: number;
 };
 
+type Resource = {
+  platform: "YouTube" | "Coursera";
+  title: string;
+  url: string;
+};
+
 type RoadmapItem = {
   skill: string;
   title: string;
@@ -27,6 +34,7 @@ type RoadmapItem = {
   duration: string;
   level: string;
   status: "Priority" | "Developing" | "Next" | "Completed";
+  resources: Resource[];
 };
 
 export default function LearningPage() {
@@ -36,6 +44,8 @@ export default function LearningPage() {
     { name: "SQL", score: 0 },
     { name: "Node.js", score: 0 },
   ]);
+
+  const [expanded, setExpanded] = useState<string | null>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem("skillbridge-assessment");
@@ -69,6 +79,18 @@ export default function LearningPage() {
       duration: "2 weeks",
       level: "Foundation",
       status: javascriptScore >= 75 ? "Completed" : "Priority",
+      resources: [
+        {
+          platform: "YouTube",
+          title: "JavaScript Full Course (freeCodeCamp)",
+          url: "https://www.youtube.com/watch?v=PkZNo7MFNFg",
+        },
+        {
+          platform: "Coursera",
+          title: "JavaScript Basics — University of California, Davis",
+          url: "https://www.coursera.org/learn/javascript-basics",
+        },
+      ],
     },
     {
       skill: "React",
@@ -78,6 +100,18 @@ export default function LearningPage() {
       duration: "2 weeks",
       level: "Intermediate",
       status: reactScore >= 75 ? "Completed" : "Developing",
+      resources: [
+        {
+          platform: "YouTube",
+          title: "React Course for Beginners (freeCodeCamp)",
+          url: "https://www.youtube.com/watch?v=bMknfKXIFA8",
+        },
+        {
+          platform: "Coursera",
+          title: "React Basics — Meta",
+          url: "https://www.coursera.org/learn/react-basics",
+        },
+      ],
     },
     {
       skill: "SQL",
@@ -87,6 +121,18 @@ export default function LearningPage() {
       duration: "1 week",
       level: "Intermediate",
       status: sqlScore >= 75 ? "Completed" : "Developing",
+      resources: [
+        {
+          platform: "YouTube",
+          title: "SQL Tutorial — Full Database Course (freeCodeCamp)",
+          url: "https://www.youtube.com/watch?v=HXV3zeQKqGY",
+        },
+        {
+          platform: "Coursera",
+          title: "SQL for Data Science — UC Davis",
+          url: "https://www.coursera.org/learn/sql-for-data-science",
+        },
+      ],
     },
     {
       skill: "Node.js",
@@ -96,6 +142,18 @@ export default function LearningPage() {
       duration: "2 weeks",
       level: "Intermediate",
       status: nodeScore >= 75 ? "Completed" : "Priority",
+      resources: [
+        {
+          platform: "YouTube",
+          title: "Node.js and Express.js Full Course (freeCodeCamp)",
+          url: "https://www.youtube.com/watch?v=Oe421EPjeBE",
+        },
+        {
+          platform: "Coursera",
+          title: "Server-side Development with Node, Express and MongoDB",
+          url: "https://www.coursera.org/learn/server-side-nodejs",
+        },
+      ],
     },
     {
       skill: "REST APIs",
@@ -105,6 +163,18 @@ export default function LearningPage() {
       duration: "1 week",
       level: "Intermediate",
       status: "Next",
+      resources: [
+        {
+          platform: "YouTube",
+          title: "REST API Crash Course (Traversy Media)",
+          url: "https://www.youtube.com/watch?v=-MTSQjw5DrM",
+        },
+        {
+          platform: "Coursera",
+          title: "APIs — Meta Back-End Developer",
+          url: "https://www.coursera.org/learn/apis",
+        },
+      ],
     },
     {
       skill: "Docker",
@@ -114,6 +184,18 @@ export default function LearningPage() {
       duration: "1 week",
       level: "Advanced",
       status: "Next",
+      resources: [
+        {
+          platform: "YouTube",
+          title: "Docker Tutorial for Beginners (freeCodeCamp)",
+          url: "https://www.youtube.com/watch?v=fqMOX6JJhGo",
+        },
+        {
+          platform: "Coursera",
+          title: "Container-Based Application Development with Docker",
+          url: "https://www.coursera.org/learn/ibm-containers-docker",
+        },
+      ],
     },
   ];
 
@@ -297,6 +379,7 @@ export default function LearningPage() {
               {roadmap.map((item, index) => {
                 const isPriority = item.status === "Priority";
                 const isCompleted = item.status === "Completed";
+                const isExpanded = expanded === item.title;
 
                 return (
                   <div
@@ -364,17 +447,51 @@ export default function LearningPage() {
                         {!isCompleted && (
                           <button
                             onClick={() =>
-                              alert(
-                                `Learning module for ${item.title} will be connected here.`
-                              )
+                              setExpanded(isExpanded ? null : item.title)
                             }
                             className="ml-auto flex items-center gap-2 rounded-lg border border-white/10 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-white/5"
                           >
                             <PlayCircle size={14} />
-                            Start Learning
+                            {isExpanded ? "Hide Resources" : "Start Learning"}
                           </button>
                         )}
                       </div>
+
+                      {isExpanded && (
+                        <div className="mt-4 space-y-2 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                          <p className="mb-2 text-xs font-medium text-slate-400">
+                            Recommended resources
+                          </p>
+
+                          {item.resources.map((resource) => (
+                            <a
+                              key={resource.url}
+                              href={resource.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2.5 text-sm hover:bg-white/10"
+                            >
+                              <span className="flex items-center gap-2">
+                                <span
+                                  className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                                    resource.platform === "YouTube"
+                                      ? "bg-red-500/15 text-red-400"
+                                      : "bg-blue-500/15 text-blue-400"
+                                  }`}
+                                >
+                                  {resource.platform}
+                                </span>
+                                {resource.title}
+                              </span>
+
+                              <ExternalLink
+                                size={14}
+                                className="text-slate-500"
+                              />
+                            </a>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
